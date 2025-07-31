@@ -1,0 +1,248 @@
+-- ✅ Final corrected version: Draggable, with working player list and blur intro
+
+-- LocalScript inside StarterGui
+
+local PlayersService = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
+local player = PlayersService.LocalPlayer
+
+-- Setup ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "VisualToolUI"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- Blur Effect
+local blur = Instance.new("BlurEffect")
+blur.Size = 0
+blur.Parent = Lighting
+
+-- Bloxified Intro Text
+local introText = Instance.new("TextLabel")
+introText.Size = UDim2.new(1, 0, 1, 0)
+introText.Position = UDim2.new(0, 0, 0, 0)
+introText.BackgroundTransparency = 1
+introText.Text = "BLOXIFIED"
+introText.TextColor3 = Color3.fromRGB(170, 85, 255)
+introText.Font = Enum.Font.Arcade
+introText.TextSize = 80
+introText.TextStrokeTransparency = 0.5
+introText.TextStrokeColor3 = Color3.fromRGB(255, 255, 255)
+introText.TextScaled = true
+introText.Parent = screenGui
+
+-- Animate blur and fade out intro text
+local blurTween = TweenService:Create(blur, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 24})
+local blurOutTween = TweenService:Create(blur, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 0})
+local introFadeTween = TweenService:Create(introText, TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1, TextStrokeTransparency = 1})
+
+blurTween:Play()
+blurTween.Completed:Wait()
+wait(0.5)
+introFadeTween:Play()
+blurOutTween:Play()
+introFadeTween.Completed:Wait()
+introText:Destroy()
+
+-- Create the main frame
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, 200, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -100, 0.5, -100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 0, 60)
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = true
+mainFrame.Parent = screenGui
+
+-- UI title at the bottom of the main frame
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 30)
+titleLabel.Position = UDim2.new(0, 0, 1, -30)
+titleLabel.AnchorPoint = Vector2.new(0, 1)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "BLOXIFIED"
+titleLabel.TextColor3 = Color3.fromRGB(170, 85, 255)
+titleLabel.Font = Enum.Font.GothamBlack
+titleLabel.TextSize = 20
+titleLabel.TextStrokeTransparency = 0.4
+titleLabel.Parent = mainFrame
+
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(0, 12)
+uiCorner.Parent = mainFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(128, 0, 255)
+stroke.Transparency = 0.2
+stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+stroke.Parent = mainFrame
+
+local layout = Instance.new("UIListLayout")
+layout.Padding = UDim.new(0, 10)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+layout.Parent = mainFrame
+
+local function createButton(text, parent)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0.8, 0, 0, 40)
+	button.BackgroundColor3 = Color3.fromRGB(50, 0, 100)
+	button.TextColor3 = Color3.fromRGB(255, 255, 255)
+	button.Font = Enum.Font.Gotham
+	button.TextSize = 16
+	button.Text = text
+	button.AutoButtonColor = true
+	button.Parent = parent or mainFrame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = button
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(128, 0, 255)
+	stroke.Transparency = 0.1
+	stroke.Parent = button
+
+	return button
+end
+
+local playersButton = createButton("Players")
+playersButton.Parent = mainFrame
+
+local playersListFrame = Instance.new("Frame")
+playersListFrame.Name = "PlayersListFrame"
+playersListFrame.Size = UDim2.new(0, 150, 0, 200)
+playersListFrame.Position = UDim2.new(0, mainFrame.AbsolutePosition.X + mainFrame.AbsoluteSize.X + 10, 0, mainFrame.AbsolutePosition.Y)
+playersListFrame.BackgroundColor3 = Color3.fromRGB(20, 0, 40)
+playersListFrame.Visible = false
+playersListFrame.Parent = screenGui
+
+local listCorner = Instance.new("UICorner")
+listCorner.CornerRadius = UDim.new(0, 8)
+listCorner.Parent = playersListFrame
+
+local playersListLayout = Instance.new("UIListLayout")
+playersListLayout.Padding = UDim.new(0, 5)
+playersListLayout.FillDirection = Enum.FillDirection.Vertical
+playersListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+playersListLayout.VerticalAlignment = Enum.VerticalAlignment.Top
+playersListLayout.Parent = playersListFrame
+
+local function createListItem(text, parent)
+	local item = Instance.new("TextButton")
+	item.Size = UDim2.new(0.9, 0, 0, 30)
+	item.BackgroundColor3 = Color3.fromRGB(50, 0, 100)
+	item.TextColor3 = Color3.fromRGB(255, 255, 255)
+	item.Font = Enum.Font.Gotham
+	item.TextSize = 16
+	item.Text = text
+	item.AutoButtonColor = true
+	item.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 8)
+	corner.Parent = item
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 1.5
+	stroke.Color = Color3.fromRGB(128, 0, 255)
+	stroke.Transparency = 0.1
+	stroke.Parent = item
+
+	return item
+end
+
+local function populatePlayersList()
+	for _, child in ipairs(playersListFrame:GetChildren()) do
+		if child:IsA("TextButton") then
+			child:Destroy()
+		end
+	end
+	for _, plr in ipairs(PlayersService:GetPlayers()) do
+		if plr ~= player then
+			local listItem = createListItem(plr.Name, playersListFrame)
+			listItem.MouseButton1Click:Connect(function()
+				playersButton.Text = plr.Name
+				playersListFrame.Visible = false
+			end)
+		end
+	end
+end
+
+playersButton.MouseButton1Click:Connect(function()
+	playersListFrame.Visible = not playersListFrame.Visible
+	if playersListFrame.Visible then
+		populatePlayersList()
+	end
+end)
+
+local textInput = Instance.new("TextBox")
+textInput.Size = UDim2.new(0.8, 0, 0, 40)
+textInput.BackgroundColor3 = Color3.fromRGB(50, 0, 100)
+textInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+textInput.Font = Enum.Font.Gotham
+textInput.TextSize = 16
+textInput.PlaceholderText = "Type here..."
+textInput.ClearTextOnFocus = false
+textInput.Parent = mainFrame
+
+local textInputCorner = Instance.new("UICorner")
+textInputCorner.CornerRadius = UDim.new(0, 8)
+textInputCorner.Parent = textInput
+
+local textInputStroke = Instance.new("UIStroke")
+textInputStroke.Thickness = 1.5
+textInputStroke.Color = Color3.fromRGB(128, 0, 255)
+textInputStroke.Transparency = 0.1
+textInputStroke.Parent = textInput
+
+local stealButton = createButton("Steal")
+stealButton.Parent = mainFrame
+
+stealButton.MouseButton1Click:Connect(function()
+	print("Stealing from " .. playersButton.Text .. " with input: " .. textInput.Text)
+end)
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function update(input)
+	local delta = input.Position - dragStart
+	local newPosition = UDim2.new(
+		startPos.X.Scale, startPos.X.Offset + delta.X,
+		startPos.Y.Scale, startPos.Y.Offset + delta.Y
+	)
+	mainFrame.Position = newPosition
+	playersListFrame.Position = UDim2.new(0, mainFrame.AbsolutePosition.X + mainFrame.AbsoluteSize.X + 10, 0, mainFrame.AbsolutePosition.Y)
+end
+
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
+end)
